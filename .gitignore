@@ -1,0 +1,25 @@
+# Ignore environment-specific configuration files
+.env
+.env.local
+.env.*.local
+
+# Ignore build and compiled files
+build/
+dist/
+node_modules/
+
+# Ignore package-lock.json (if you are using npm)
+package-lock.json
+
+# Ignore yarn.lock (if you are using yarn)
+yarn.lock
+
+# Ignore editor configuration files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore system and hidden files
+.DS_Store
+Thumbs.db

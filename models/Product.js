@@ -12,12 +12,6 @@ const productSchema = new mongoose.Schema({
         min: 0,
         max: 100,
     },
-    stock: {
-        type: Number,
-        default: 0,
-        min: 0,
-    },
-    brand: { type: mongoose.Schema.Types.ObjectId, ref: 'Brand' },
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
     seller: { type: mongoose.Schema.Types.ObjectId, ref: 'Seller' },
     attributes: {

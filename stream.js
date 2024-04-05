@@ -6,26 +6,12 @@ const config = {
         chunk_size: 60000,
         gop_cache: true,
         ping: 30,
-        ping_timeout: 60,
+        ping_timeout: 60
     },
     http: {
         port: 8000,
-        allow_origin: '*',
-    },
-    // https: {
-    //     port: 8443,
-    //     key: './privatekey.pem',
-    //     cert: './certificate.pem',
-    // },
-    relay: {
-        ffmpeg: '/usr/bin/ffmpeg',
-        tasks: [
-            {
-                app: 'live',
-                mode: 'push',
-                edge: 'rtmp://example.com/live',
-            },
-        ],
+        mediaroot: './media',
+        allow_origin: '*'
     },
     trans: {
         ffmpeg: '/usr/bin/ffmpeg',
@@ -36,10 +22,11 @@ const config = {
                 hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
                 dash: true,
                 dashFlags: '[f=dash:window_size=3:extra_window_size=5]',
-            },
-        ],
-    },
+            }
+        ]
+    }
 };
+
 
 const nms = new NodeMediaServer(config);
 

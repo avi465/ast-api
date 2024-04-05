@@ -70,14 +70,15 @@ exports.addProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
     try {
         const productId = req.params.id;
-        const { name, description, price, discount, stock, brand, category, seller, color, size, material, height, weight, dimension, url } = req.body;
+        const { name, description, price, discount, category, seller, url } = req.body;
 
         const updatedProduct = await Product.findByIdAndUpdate(
             productId,
             {
                 name,
+                description,
                 price,
-                description
+                discount
             },
             { new: true }
         );

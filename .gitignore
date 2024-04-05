@@ -23,3 +23,6 @@ yarn.lock
 # Ignore system and hidden files
 .DS_Store
 Thumbs.db
+
+# Development
+uploads/

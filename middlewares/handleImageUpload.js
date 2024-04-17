@@ -8,8 +8,8 @@ function getResizeOptions(clientType) {
     // Define the resize options for each client type
     const resizeOptions = {
         mobile: { width: 320, height: 240 },
-        pc: { width: 800, height: 600 },
-        tablet: { width: 600, height: 480 },
+        // pc: { width: 800, height: 600 },
+        // tablet: { width: 600, height: 480 },
     };
 
     // Return the resize options based on the client type

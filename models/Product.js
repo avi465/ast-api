@@ -31,12 +31,6 @@ const productSchema = new mongoose.Schema({
             },
         },
     ],
-    reviews: [
-        {
-            review: { type: mongoose.Schema.Types.ObjectId, ref: 'Review' },
-            rating: Number,
-        },
-    ],
     ratings: {
         total: Number,
         count: Number,

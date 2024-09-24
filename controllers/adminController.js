@@ -2,7 +2,6 @@ const bcrypt = require('bcrypt');
 const { store } = require('../middlewares/sessionMiddleware');
 const User = require('../models/User');
 const Admin = require('../models/Admin');
-const Seller = require('../models/Seller');
 const Order = require('../models/Order');
 // ...
 
@@ -108,65 +107,10 @@ const manageOrders = async (req, res) => {
     }
 }
 
-const manageSellers = async (req, res) => {
-    try {
-        // Fetch all sellers from the database
-        const sellers = await Seller.find();
-
-        // Return the sellers as the API response
-        res.json({ sellers });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-}
-
-const manageCategories = async (req, res) => {
-    try {
-        // Fetch all categories from the database
-        const categories = await Category.find();
-
-        // Return the categories as the API response
-        res.json({ categories });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-}
-
-const manageBrands = async (req, res) => {
-    try {
-        // Fetch all brands from the database
-        const brands = await Brand.find();
-
-        // Return the brands as the API response
-        res.json({ brands });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-}
-
-const manageCoupons = async (req, res) => {
-    try {
-        // Fetch all coupons from the database
-
-        // Return the coupons as the API response
-
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-}
-
 module.exports = {
     adminLogin,
     adminLogout,
     dashboardHome,
-    manageSellers,
-    manageBrands,
-    manageCategories,
-    manageCoupons,
     manageUsers,
     manageOrders
 };

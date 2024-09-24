@@ -7,7 +7,8 @@ const app = express();
 
 // CORS middleware
 app.use(cors({
-    origin: process.env.CORS_ORIGIN, // Replace with frontend's URL
+    // origin: process.env.CORS_ORIGIN, // Replace with frontend's URL
+    origin: "http://localhost:3001",
     credentials: true, // Enable cookies and session to be sent in cross-origin requests
 }));
 
@@ -26,17 +27,13 @@ app.use(morgan('dev'));
 // API routes
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
-const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
-const sellerRoutes = require('./routes/sellerRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 // Mount API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/seller', sellerRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Error handling middleware

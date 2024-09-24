@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const Seller = require('../models/Seller');
 const Admin = require('../models/Admin');
 
 const authenticateUser = async (req, res, next) => {
@@ -15,26 +14,6 @@ const authenticateUser = async (req, res, next) => {
         }
 
         req.user = user;
-        next();
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
-const authenticateSeller = async (req, res, next) => {
-    try {
-        if (!req.session.sellerId) {
-            return res.status(401).json({ error: 'Not authenticated' });
-        }
-
-        const seller = await Seller.findById(req.session.sellerId);
-
-        if (!seller) {
-            return res.status(401).json({ error: 'Invalid session' });
-        }
-
-        req.seller = seller;
         next();
     } catch (error) {
         console.log(error);
@@ -62,26 +41,26 @@ const authenticateAdmin = async (req, res, next) => {
     }
 };
 
-const authorizeSeller = async (req, res, next) => {
-    try {
-        const { seller, params } = req;
-        const product = await Product.findById(params.productId);
+// const authorizeSeller = async (req, res, next) => {
+//     try {
+//         const { seller, params } = req;
+//         const product = await Product.findById(params.productId);
 
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
+//         if (!product) {
+//             return res.status(404).json({ error: 'Product not found' });
+//         }
 
-        // Check if the logged-in seller is the owner of the product
-        if (product.seller.toString() !== seller._id.toString()) {
-            return res.status(403).json({ error: 'Access denied' });
-        }
+//         // Check if the logged-in seller is the owner of the product
+//         if (product.seller.toString() !== seller._id.toString()) {
+//             return res.status(403).json({ error: 'Access denied' });
+//         }
 
-        next();
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
+//         next();
+//     } catch (error) {
+//         console.log(error);
+//         res.status(500).json({ error: 'Internal server error' });
+//     }
+// };
 
 const authorizeAdmin = (req, res, next) => {
     try {
@@ -97,8 +76,6 @@ const authorizeAdmin = (req, res, next) => {
 
 module.exports = {
     authenticateUser,
-    authenticateSeller,
     authenticateAdmin,
-    authorizeSeller,
     authorizeAdmin
 };

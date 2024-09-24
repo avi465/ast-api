@@ -16,18 +16,6 @@ router.post('/logout', authenticateAdmin, adminController.adminLogout);
 // Check session
 router.get('/verify-session', authenticateAdmin, authController.verifySession);
 
-// Manage sellers
-router.get('/sellers', authenticateAdmin, adminController.manageSellers);
-
-// Manage categories
-router.get('/categories', authenticateAdmin, adminController.manageCategories);
-
-// Manage brands
-router.get('/brands', authenticateAdmin, adminController.manageBrands);
-
-// Manage coupons
-router.get('/coupons', authenticateAdmin, adminController.manageCoupons);
-
 // Manage orders
 router.get('/orders', authenticateAdmin, adminController.manageOrders);
 

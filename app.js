@@ -15,9 +15,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve static files from the 'uploads' folder
-app.use('/uploads', express.static('uploads'));
-
 // Session middleware
 app.use(sessionMiddleware);
 
@@ -29,12 +26,20 @@ const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+const { imageUploadPath } = require('./config');
+
+// Storage bucket
+app.use('/upload/images', express.static(imageUploadPath));
 
 // Mount API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -2,6 +2,7 @@ require('dotenv').config();
 const bcrypt = require('bcrypt');
 const { store } = require('../middlewares/sessionMiddleware');
 const User = require('../models/User');
+const { errorResponse, successResponse } = require('../utils/response');
 
 // const { register } = require('../utils/auth');
 
@@ -51,18 +52,34 @@ exports.login = async (req, res) => {
     const { email, password, rememberMe } = req.body;
 
     try {
+        if (!email || !password) {
+            return errorResponse(res, 'Email and password are required', 400, []);
+        }
+
+        // Check if the email is valid
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return errorResponse(res, 'Invalid email format', 400, []);
+        }
+
+        // Check if the password is valid
+        // const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/; // At least 8 characters, at least one letter and one number
+        // if (!passwordRegex.test(password)) {
+        //     return res.status(400).json({ error: 'Password must be at least 8 characters long and contain at least one letter and one number' });
+        // }
+
         // Find the user by email
         const user = await User.findOne({ email });
 
         // Check if the user exists
         if (!user) {
-            return res.status(401).json({ error: 'Invalid email' });
+            return errorResponse(res, "Email not registered", 401, []);
         }
 
         // Validate the password
         const isValidPassword = bcrypt.compareSync(password, user.password);
         if (!isValidPassword) {
-            return res.status(401).json({ error: 'Invalid password' });
+            return errorResponse(res, "Password is incorrect", 401, []);
         }
 
         // Set the user ID in the session
@@ -71,11 +88,19 @@ exports.login = async (req, res) => {
         if (rememberMe) {
             req.session.cookie.expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
         }
-        res.status(200).json({ message: 'Login successful' });
+        successResponse(res, 'Login successful', 200, {
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                role: user.role,
+            }
+        });
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({ error: 'Internal server error' });
+        errorResponse(res, 'Internal Server Error', 500, [error]);
     }
 };
 

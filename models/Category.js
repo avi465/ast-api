@@ -1,7 +1,9 @@
+// models/Category.js
+
 const mongoose = require('mongoose');
 const slugify = require('slugify');
 
-const productSchema = new mongoose.Schema({
+const categorySchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
@@ -19,48 +21,25 @@ const productSchema = new mongoose.Schema({
         default: '',
         trim: true,
     },
-    details: {
+    icon: {
         type: String,
         default: '',
-        trim: true,
     },
-    price: {
-        type: Number,
-        required: true
-    },
-    discount: {
-        type: Number,
-        default: 0,
-        min: 0,
-        max: 100,
-    },
-    category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
-    images: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Image',
-        },
-    ],
     isActive: {
         type: Boolean,
         default: true,
-    },
-    ratings: {
-        total: Number,
-        count: Number,
-        average: Number,
     },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
 });
 
-productSchema.pre('validate', function (next) {
+categorySchema.pre('validate', function (next) {
     if (this.name) {
         this.slug = slugify(this.name, { lower: true, strict: true });
     }
     next();
 });
 
-const Product = mongoose.model('Product', productSchema);
+const Category = mongoose.model('Category', categorySchema);
 
-module.exports = Product;
+module.exports = Category;

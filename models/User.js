@@ -4,28 +4,19 @@ const userSchema = new mongoose.Schema({
     name: String,
     email: String,
     password: String,
+    phone: String,
+    role: { type: String, enum: ['user', 'seller', 'admin'], default: 'user' },
+    orders: [
+        { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
+    ],
     address: {
         line1: String,
         line2: String,
         city: String,
         state: String,
         postalCode: String,
-        country: String,
+        country: { type: String, default: 'India' },
     },
-    phone: { type: String },
-    role: { type: String, enum: ['user', 'seller', 'admin'], default: 'user' },
-    cart: [
-        {
-            product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-            quantity: Number,
-        },
-    ],
-    orders: [
-        {
-            order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
-            status: String,
-        },
-    ],
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
 });

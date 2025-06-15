@@ -1,22 +1,10 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
+    orderId: String,
+    receipt: String,
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    courses: [
-        {
-            product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-            quantity: Number,
-        },
-    ],
-    shippingAddress: {
-        line1: String,
-        line2: String,
-        city: String,
-        state: String,
-        postalCode: String,
-        country: String,
-    },
-    status: String,
+    course: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
 });

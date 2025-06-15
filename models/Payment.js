@@ -1,18 +1,11 @@
 const mongoose = require('mongoose');
 
 const paymentSchema = new mongoose.Schema({
+    razorpayPaymentId: String,
+    razorpayOrderId: String,
+    razorpaySignature: String,
     order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
-    transactionId: String,
-    paymentStatus: String,
-    paymentMethod: {
-        type: String,
-        details: {
-            cardNumber: String,
-            cardHolderName: String,
-            expirationDate: String,
-            cvv: String,
-        },
-    },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
 });

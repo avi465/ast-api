@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const { sessionMiddleware } = require('./middlewares/sessionMiddleware');
+const { authenticateAdmin, authenticateUser, authenticateUserOrAdmin } = require('./middlewares/authMiddleware');
 const app = express();
 
 // CORS middleware
@@ -23,23 +24,37 @@ app.use(morgan('dev'));
 
 // API routes
 const authRoutes = require('./routes/authRoutes');
-const productRoutes = require('./routes/productRoutes');
+const courseRoutes = require('./routes/courseRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
-const { imageUploadPath } = require('./config');
+const streamRoutes = require('./routes/streamRoutes');
+const webhookRoutes = require('./routes/webhookRoutes');
+const lessonRoutes = require('./routes/lessonRoutes');
+const moduleRoutes = require('./routes/moduleRoutes');
+const slideRoutes = require('./routes/slideRoutes');
+const profileRoutes = require('./routes/profileRoute');
 
 // Storage bucket
+const { imageUploadPath, fileUploadPath} = require('./config');
+
 app.use('/upload/images', express.static(imageUploadPath));
+app.use('/upload/files', authenticateUserOrAdmin, express.static(fileUploadPath));
 
 // Mount API routes
 app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);
+app.use('/api/products', courseRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/stream', streamRoutes);
+app.use('/api/webhook', webhookRoutes);
+app.use('/api/lesson', lessonRoutes);
+app.use('/api/module', moduleRoutes);
+app.use('/api/slide', slideRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

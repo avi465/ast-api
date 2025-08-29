@@ -1,4 +1,17 @@
+require('dotenv').config();
+const axios = require('axios');
 const NodeMediaServer = require('node-media-server');
+const path = require('path');
+const { streamUploadPath} = require('./config');
+
+let ffmpegPath;
+if (process.platform === 'win32') {
+    // Windows path
+    ffmpegPath = process.env.FFMPEG_WINDOWS_PATH;
+} else {
+    // Linux path
+    ffmpegPath = process.env.FFMPEG_LINUX_PATH || '/usr/bin/ffmpeg';
+}
 
 const config = {
     rtmp: {
@@ -10,18 +23,23 @@ const config = {
     },
     http: {
         port: 8000,
-        mediaroot: './media',
+        mediaroot: streamUploadPath,
         allow_origin: '*'
     },
     trans: {
-        ffmpeg: '/usr/bin/ffmpeg',
+        ffmpeg: ffmpegPath,
         tasks: [
             {
                 app: 'live',
                 hls: true,
                 hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
+                hlsKeep: true, // to prevent hls file delete after end the stream
                 dash: true,
                 dashFlags: '[f=dash:window_size=3:extra_window_size=5]',
+                dashKeep: true, // to prevent dash file delete after end the stream
+                mp4: true,
+                mp4Flags: '[movflags=faststart]',
+                record: true
             }
         ]
     }
@@ -55,9 +73,24 @@ nms.on('postPublish', (id, StreamPath, args) => {
     // Handle postPublish event
 });
 
-nms.on('donePublish', (id, StreamPath, args) => {
+nms.on('donePublish', async (id, StreamPath, args) => {
     console.log('[NodeEvent on donePublish]:', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
     // Handle donePublish event
+    // Extract lessonId from stream path: /live/lessonId
+    // check below operation is not done on undefined
+    const parts = StreamPath.split('/');
+    const lessonId = parts[2];
+    const videoPath = path.join(streamChunkPath, 'live', `${lessonId}.mp4`);
+    // Notify your app to update the lesson record
+    try {
+        await axios.post('http://localhost:3000/api/webhook/stream-ended', {
+            lessonId,
+            videoPath
+        });
+        console.log(`Notified app for lesson ${lessonId} video at ${videoPath}`);
+    } catch (err) {
+        console.error('Failed to notify app:', err.message);
+    }
 });
 
 nms.on('prePlay', (id, StreamPath, args) => {

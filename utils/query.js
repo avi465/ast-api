@@ -5,7 +5,7 @@ const modelResolver = (value) => {
         case 'seller':
             return require('../models/Seller');
         case 'product':
-            return require('../models/Product');
+            return require('../models/Course');
         default:
             return null;
     }

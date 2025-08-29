@@ -1,28 +1,27 @@
-const Product = require('../models/Product');
+const Course = require('../models/Course');
 const Payment = require('../models/Payment');
 const Category = require('../models/Category');
 const Image = require('../models/Image');
 const { successResponse, errorResponse } = require('../utils/response');
 
-// Get all products
-exports.getAllProducts = async (req, res) => {
+// Get all courses
+exports.getAllCourses = async (req, res) => {
     try {
-        const products = await Product.find()
+        const courses = await Course.find()
             .sort({ createdAt: -1 })
             .populate({
                 path: "images",
-                select: ["_id", "url", "altText"], // only select the _id and url fields
+                select: ["_id", "url", "altText"]
             })
             .populate({
                 path: "category",
             });
 
-        if (!products || products.length === 0) {
-            console.warn("No products found in the database.");
+        if (!courses) {
             return successResponse(res, 'No products found', 204, []);
         }
 
-        successResponse(res, 'Courses fetched successfully', 200, products);
+        successResponse(res, 'Courses fetched successfully', 200, courses);
 
     } catch (error) {
         console.error(error);
@@ -45,7 +44,7 @@ exports.getPurchasedCourses = async (req, res) => {
                 },
             });
 
-        if (purchasedCourses.length === 0) {
+        if (!purchasedCourses) {
             return successResponse(res, 'No purchased courses found', 200, null);
         }
 
@@ -53,7 +52,7 @@ exports.getPurchasedCourses = async (req, res) => {
         const courseIds = purchasedCourses.map(payment => payment.order.course?._id);
 
         // Fetch course details using the extracted IDs
-        const purchasedCoursesDetails = await Product.find({ _id: { $in: courseIds } })
+        const purchasedCoursesDetails = await Course.find({ _id: { $in: courseIds } })
             .populate({
                 path: "images",
                 select: ["_id", "url", "altText"], // only select the _id and url fields
@@ -67,22 +66,15 @@ exports.getPurchasedCourses = async (req, res) => {
         }
 
         successResponse(res, 'Purchased courses fetched successfully', 200, purchasedCoursesDetails);
-        // return res.status(200).json({
-        //     courses: purchasedCoursesDetails,
-        //     partiallyMissing: validPayments.length < purchasedCourses.length
-        // });
-
     } catch (error) {
         console.error(error);
-        errorResponse(res, 'Internal Server Error', 500, [error]);
+        errorResponse(res, 'Internal Server Error', 500, [error.message]);
     }
 };
 
-exports.getRecommendedProducts = async (req, res) => {
+exports.getLatestCourses = async (req, res) => {
     try {
-        // todo: this is just fetching latest 3 products
-        // need proper recommendation for every users
-        const recommendedProducts = await Product.find()
+        const latestCourses = await Course.find()
             .sort({ createdAt: -1 })
             .limit(3)
             .populate({
@@ -93,44 +85,42 @@ exports.getRecommendedProducts = async (req, res) => {
                 path: "category",
             });
 
-        if (!recommendedProducts || recommendedProducts.length === 0) {
-            return successResponse(res, 'No recommended products found', 204, []);
+        if (!latestCourses) {
+            return successResponse(res, 'No latest courses found', 204, []);
         }
 
         // Filter out products that are not active
-        const activeProducts = recommendedProducts.filter(product => product.isActive);
+        const activeCourses = latestCourses.filter(course => course.isActive);
 
-        if (activeProducts.length === 0) {
-            return successResponse(res, 'No recommended products found', 204, []);
+        if (activeCourses.length === 0) {
+            return successResponse(res, 'No latest courses found', 204, []);
         }
 
-        successResponse(res, 'Recommended products fetched successfully', 200, activeProducts);
-
+        successResponse(res, 'Latest courses fetched successfully', 200, activeCourses);
     } catch (error) {
-        console.error(error);
-        errorResponse(res, 'Internal Server Error', 500, [error]);
+        errorResponse(res, 'Internal Server Error', 500, [error.message]);
     }
 }
 
-// Get a single product by ID
-exports.getProductById = async (req, res) => {
+// Get a single course by ID
+exports.getCourseById = async (req, res) => {
     try {
-        const productId = req.params.id;
+        const courseId = req.params.id;
 
-        const product = await Product.findById(productId)
+        const course = await Course.findById(courseId)
             .populate({
                 path: "images",
-                select: ["_id", "url", "altText"], // only select the _id and url fields
+                select: ["_id", "url", "altText"]
             })
             .populate({
                 path: "category",
             });
 
-        if (!product) {
-            successResponse(res, 'Product not found', 204, []);
+        if (!course) {
+            successResponse(res, 'Course not found', 204, []);
         }
 
-        successResponse(res, 'Product fetched successfully', 200, product);
+        successResponse(res, 'Course fetched successfully', 200, course);
 
     } catch (error) {
         console.error(error);
@@ -140,7 +130,7 @@ exports.getProductById = async (req, res) => {
 
 // Add a new product
 
-exports.addProduct = async (req, res) => {
+exports.addCourse = async (req, res) => {
     try {
         const { name, description, details, price, discount, category, images, ratings } = req.body;
 
@@ -157,8 +147,7 @@ exports.addProduct = async (req, res) => {
             return errorResponse(res, 'Some images not found', 400, []);
         }
 
-        // Create a new product instance
-        const product = new Product({
+        const course = new Course({
             name,
             description,
             details,
@@ -169,15 +158,13 @@ exports.addProduct = async (req, res) => {
             ratings
         });
 
-        // Save the product to the database
-        await product.save();
-
-        successResponse(res, 'Product created successfully', 201, product);
+        await course.save();
+        successResponse(res, 'Course created successfully', 201, course);
 
     } catch (error) {
         if (error.code === 11000) {
             const field = Object.keys(error.keyValue)[0];
-            errorResponse(res, `A product with same [${field}] already exists.`, 400, []);
+            errorResponse(res, `A course with same [${field}] already exists.`, 400, []);
         }
 
         console.error(error);
@@ -187,12 +174,12 @@ exports.addProduct = async (req, res) => {
 
 // Update a product
 // todo: need to be checked to compatible with the model
-exports.updateProduct = async (req, res) => {
+exports.updateCourse = async (req, res) => {
     try {
-        const productId = req.params.id;
+        const courseId = req.params.id;
         const { name, description, price, discount, category } = req.body;
 
-        const updatedProduct = await Product.findByIdAndUpdate(productId,
+        const updatedCourse = await Product.findByIdAndUpdate(courseId,
             {
                 name,
                 description,
@@ -202,88 +189,79 @@ exports.updateProduct = async (req, res) => {
             },
             { new: true }
         );
-        if (!updatedProduct) {
-            return errorResponse(res, 'Product not found', 404, []);
+        if (!updatedCourse) {
+            return errorResponse(res, 'Course not found', 404, []);
         }
-
-        successResponse(res, 'Product updated successfully', 201, updatedProduct);
+        successResponse(res, 'Course updated successfully', 201, updatedCourse);
 
     } catch (error) {
-        console.error(error);
-        errorResponse(res, 'Internal Server Error', 500, [error]);
+        errorResponse(res, 'Internal Server Error', 500, [error.message]);
     }
 };
 
-// Delete a product
-// Danger: deleting product once user purchase will
-// create issue insted add flag to products as isActive
-exports.deleteProduct = async (req, res) => {
+// Delete a course
+// Danger: deleting course once user purchase will
+// create issue instead add flag to products as isActive
+exports.deleteCourse = async (req, res) => {
     try {
-        const productId = req.params.id;
-        const deletedProduct = await Product.findByIdAndDelete(productId);
-        if (!deletedProduct) {
-            return errorResponse(res, 'Product not found', 404, []);
+        const courseId = req.params.id;
+
+        const deletedCourse = await Course.findByIdAndDelete(courseId);
+
+        if (!deletedCourse) {
+            return errorResponse(res, 'Course not found', 404, []);
         }
 
-        successResponse(res, 'Product deleted successfully', 200, deletedProduct);
+        successResponse(res, 'Course deleted successfully', 200, deletedCourse);
 
     } catch (error) {
         console.error(error);
-        errorResponse(res, 'Internal Server Error', 500, [error]);
+        errorResponse(res, 'Internal Server Error', 500, [error.message]);
     }
 };
 
-// Get all products by category
-exports.getProductsByCategory = async (req, res) => {
+// Get all course by category
+exports.getCoursesByCategory = async (req, res) => {
     try {
         const categoryId = req.params.categoryId;
-        const product = Product.findById(categoryId);
-        if (!product) {
-            return errorResponse(res, 'Product not found', 404, []);
+        const course = Course.findById(categoryId);
+        if (!course) {
+            return errorResponse(res, 'Course not found', 404, []);
         }
 
     } catch (error) {
-        console.error(error);
-        errorResponse(res, 'Internal Server Error', 500, [error]);
-
+        errorResponse(res, 'Internal Server Error', 500, [error.message]);
     }
 }
 
-// Create a new product category
-exports.createProductCategory = async (req, res) => {
+// Create a new course category
+exports.createCourseCategory = async (req, res) => {
     try {
         const { name, description, icon } = req.body;
-
         const newCategory = new Category({ name, description, icon });
-
         await newCategory.save();
-
-        successResponse(res, 'Product category created successfully', 201, newCategory);
+        successResponse(res, 'Course category created successfully', 201, newCategory);
 
     } catch (error) {
         if (error.code === 11000) {
             const field = Object.keys(error.keyValue)[0];
             errorResponse(res, `A category with same [${field}] already exists.`, 400, []);
         }
-
-        console.error(error);
-        errorResponse(res, 'Internal Server Error', 500, [error]);
+        errorResponse(res, 'Internal Server Error', 500, [error.message]);
     }
 };
 
-// Get all product categories
-exports.getAllProductCategories = async (req, res) => {
+// Get all course categories
+exports.getAllCourseCategories = async (req, res) => {
     try {
         const categories = await Category.find();
 
-        if (!categories || categories.length === 0) {
-            return successResponse(res, 'No product categories found', 204, []);
+        if (!categories) {
+            return successResponse(res, 'No course categories found', 204, []);
         }
-
-        successResponse(res, 'Product categories fetched successfully', 200, categories);
+        successResponse(res, 'Course categories fetched successfully', 200, categories);
 
     } catch (error) {
-        console.error(error);
-        errorResponse(res, 'Internal Server Error', 500, [error]);
+        errorResponse(res, 'Internal Server Error', 500, [error.message]);
     }
 };

@@ -41,7 +41,35 @@ const authenticateAdmin = async (req, res, next) => {
     }
 };
 
+const authenticateUserOrAdmin = async (req, res, next) => {
+    try {
+        if (req.session?.adminId) {
+            const admin = await Admin.findById(req.session.adminId);
+            if (admin) {
+                req.admin = admin;
+                return next(); // ✅ Admin authenticated
+            }
+        }
+
+        if (req.session?.userId) {
+            const user = await User.findById(req.session.userId);
+            if (user) {
+                req.user = user;
+                return next(); // ✅ User authenticated
+            }
+        }
+
+        return res.status(401).json({ error: 'Not authenticated' });
+
+    } catch (error) {
+        console.error('Authentication error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+
 module.exports = {
     authenticateUser,
     authenticateAdmin,
+    authenticateUserOrAdmin
 };

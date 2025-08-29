@@ -1,4 +1,7 @@
 const Image = require('../models/Image');
+const File = require('../models/File');
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 exports.uploadImages = async (req, res) => {
     try {
@@ -35,5 +38,53 @@ exports.uploadImages = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Image upload failed' });
+    }
+};
+
+exports.uploadFile = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        // File size validation
+        if (req.file.size > MAX_FILE_SIZE) {
+            return res.status(400).json({ error: 'File size exceeds limit' });
+        }
+
+        const fileDoc = new File({
+            filename: req.file.filename,
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+            path: req.file.path,
+            uploadedBy: req.admin ? req.admin._id : null,
+            metadata: {
+                fieldname: req.file.fieldname,
+                encoding: req.file.encoding,
+                destination: req.file.destination
+            },
+            description: req.body.description || '',
+            tags: req.body.tags ? req.body.tags.split(',').map(t => t.trim()) : []
+        });
+
+        await fileDoc.save();
+
+        res.status(201).json({
+            message: 'File uploaded successfully',
+            file: {
+                _id: fileDoc._id,
+                filename: fileDoc.filename,
+                originalname: fileDoc.originalname,
+                mimetype: fileDoc.mimetype,
+                size: fileDoc.size,
+                uploadDate: fileDoc.uploadDate,
+                description: fileDoc.description,
+                tags: fileDoc.tags
+            }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'File upload failed', details: err.message });
     }
 };

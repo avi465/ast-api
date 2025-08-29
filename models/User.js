@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
     email: String,
     password: String,
     phone: String,
-    role: { type: String, enum: ['user', 'seller', 'admin'], default: 'user' },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
     orders: [
         { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
     ],

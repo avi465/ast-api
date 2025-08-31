@@ -1,3 +1,4 @@
+require("dotenv").config({ path: __dirname + "/.env" });
 const app = require('./app');
 const connectDB = require('./utils/db');
 const nms = require('./stream')

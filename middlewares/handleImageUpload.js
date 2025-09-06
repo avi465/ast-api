@@ -3,8 +3,12 @@ const { v4: uuidv4 } = require('uuid');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
+const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
+const multerS3 = require('multer-s3');
+const { imageUploadPath, s3BucketName } = require('../config');
+const {errorResponse, successResponse} = require("../utils/response");
 
-const { imageUploadPath } = require('../config'); // Adjust the path as necessary
+const isProduction = process.env.NODE_ENV === 'production';
 
 function getResizeOptions(clientType) {
     // Define the resize options for each client type
@@ -52,64 +56,101 @@ function getResizeOptions(clientType) {
     return resizeOptions[clientType];
 }
 
-// Configure multer middleware for file uploads
-const upload = multer({
-    storage: multer.diskStorage({
-        destination: (req, file, cb) => {
-            // Specify the destination folder for storing images
-            cb(null, imageUploadPath);
+let storage;
+let s3Client;
+if (isProduction) {
+    s3Client = new S3Client({
+        region: process.env.AWS_REGION,
+        credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         },
-        filename: (req, file, cb) => {
-            // const extension = path.extname(file.originalname);
-            // const filename = `${uuidv4()}${extension}`;
-            const filename = uuidv4();
-            cb(null, filename);
+    });
+    storage = multerS3({
+        s3: s3Client,
+        bucket: s3BucketName,
+        // acl: 'public-read',
+        key: (req, file, cb) => {
+            cb(null, `images/${uuidv4()}${path.extname(file.originalname)}`);
         },
-    }),
-});
+    });
+} else {
+    storage = multer.diskStorage({
+        destination: (req, file, cb) => cb(null, imageUploadPath),
+        filename: (req, file, cb) => cb(null, uuidv4()),
+    });
+}
 
-// Middleware for handling multiple file uploads
+const upload = multer({ storage });
+
 const uploadImages = (req, res, next) => {
     upload.array('images')(req, res, (error) => {
         if (error instanceof multer.MulterError) {
-            // A Multer error occurred during file upload
-            console.error(error);
-            return res.status(400).json({ error: 'File upload error' });
+            errorResponse(res, "Multer error", 500, [error.message]);
         } else if (error) {
-            // An unknown error occurred
-            console.error(error);
-            return res.status(500).json({ error: 'Internal Server Error' });
+            errorResponse(res, "Internal Server Error", 500, [error.message]);
         }
-        // Files uploaded successfully
         next();
     });
 };
 
-// Middleware for resizing and compressing uploaded images using sharp
 const processImages = async (req, res, next) => {
     try {
         const { quality } = req.body;
         const clientTypes = ['original', 'landscapeSM', 'portraitSM'];
         const variations = [];
 
+        if (!req.files || req.files.length === 0) return next();
+
         for (const file of req.files) {
             for (const clientType of clientTypes) {
                 const resizeOptions = getResizeOptions(clientType);
-                const filename = `${file.filename}_${clientType}.webp`;
+                const filename = `${file.filename || uuidv4()}_${clientType}.webp`;
 
-                await sharp(file.path)
-                    .resize(resizeOptions)
-                    .webp({ quality: parseInt(quality) || 80 })
-                    .toFile(path.join(imageUploadPath, filename));
+                if (isProduction) {
+                    // S3: Download, process, upload
+                    const s3Key = file.key || file.location.split('/').pop();
+                    const getCmd = new GetObjectCommand({ Bucket: s3BucketName, Key: s3Key });
+                    const s3Object = await s3Client.send(getCmd);
 
-                // variations.push(filename);
+                    // s3Object.Body is a stream, convert to buffer
+                    const chunks = [];
+                    for await (const chunk of s3Object.Body) {
+                        chunks.push(chunk);
+                    }
+                    const buffer = Buffer.concat(chunks);
+
+                    const processedBuffer = await sharp(buffer)
+                        .resize(resizeOptions)
+                        .webp({ quality: parseInt(quality) || 80 })
+                        .toBuffer();
+
+                    const uploadKey = `images/${filename}`;
+                    const putCmd = new PutObjectCommand({
+                        Bucket: s3BucketName,
+                        Key: uploadKey,
+                        Body: processedBuffer,
+                        ContentType: 'image/webp',
+                        // ACL: 'public-read'
+                    });
+                    await s3Client.send(putCmd);
+
+                    variations.push({ key: uploadKey, url: `https://${s3BucketName}.s3.amazonaws.com/${uploadKey}` });
+                } else {
+                    // Local: Process and save
+                    const outputPath = path.join(imageUploadPath, filename);
+                    await sharp(file.path)
+                        .resize(resizeOptions)
+                        .webp({ quality: parseInt(quality) || 80 })
+                        .toFile(outputPath);
+
+                    variations.push({ filename, path: outputPath });
+                }
             }
-            // Remove the original file
-            fs.unlinkSync(file.path);
+            if (!isProduction && file.path) fs.unlinkSync(file.path);
         }
 
         req.imageVariations = variations;
-        // Continue to the next middleware or route handler
         next();
     } catch (error) {
         next(error);

@@ -1,5 +1,6 @@
 const Image = require('../models/Image');
 const File = require('../models/File');
+const {errorResponse, successResponse} = require("../utils/response");
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -10,6 +11,8 @@ exports.uploadImages = async (req, res) => {
         if (!files.length) {
             return res.status(400).json({ error: 'No files uploaded' });
         }
+
+        console.log(files);
 
         const images = await Promise.all(
             files.map(async (file) => {
@@ -37,7 +40,7 @@ exports.uploadImages = async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Image upload failed' });
+        errorResponse(res, 'Image upload failed', 500, [err.message]);
     }
 };
 
@@ -85,6 +88,6 @@ exports.uploadFile = async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'File upload failed', details: err.message });
+        errorResponse(res, 'File upload failed', 500, [err.message]);
     }
 };

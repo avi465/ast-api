@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>HLS Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+<video id="video" controls autoplay playsinline width="480" height="320"></video>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script>
+    const streamKey = new URLSearchParams(location.search).get('key') || 'test';
+    const src = `http://${location.hostname}:8000/live/${streamKey}/index.m3u8`;
+    const video = document.getElementById('video');
+
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari
+        video.src = src;
+    } else if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(src);
+        hls.attachMedia(video);
+    } else {
+        alert('HLS not supported in this browser.');
+    }
+</script>
+</body>
+</html>

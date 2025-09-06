@@ -20,13 +20,14 @@ store.on('error', (error) => {
 });
 
 // Configure and use express-session middleware with the session store
+// todo: add secure cookie in production
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: store,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',  // Set to true if using HTTPS
+        // secure: process.env.NODE_ENV === 'production',  // Set to true if using HTTPS
         maxAge: 24 * 60 * 60 * 1000 * 30, // Session expiration time in milliseconds
     },
 });

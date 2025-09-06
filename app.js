@@ -1,9 +1,11 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const morgan = require('morgan');
 const { sessionMiddleware } = require('./middlewares/sessionMiddleware');
 const { authenticateAdmin, authenticateUser, authenticateUserOrAdmin } = require('./middlewares/authMiddleware');
+const {errorResponse, successResponse} = require("./utils/response");
 const app = express();
 
 // CORS middleware
@@ -39,6 +41,9 @@ const profileRoutes = require('./routes/profileRoute');
 // Storage bucket
 const { imageUploadPath, fileUploadPath} = require('./config');
 
+// hls/dash players
+app.use('/player', express.static(path.join(__dirname, 'public')));
+
 app.use('/upload/images', express.static(imageUploadPath));
 app.use('/upload/files', authenticateUserOrAdmin, express.static(fileUploadPath));
 
@@ -59,7 +64,7 @@ app.use('/api/profile', profileRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    errorResponse(res, 'Internal Server Error', 500, [err]);
 });
 
 module.exports = app;

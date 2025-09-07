@@ -1,28 +1,229 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>HLS Player</title>
+    <title>Live Stream Player</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            background: #f9fafb;
+            color: #111827;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .card-header { display: flex; flex-direction: column; gap: 0.25rem; }
+        .card-title { font-size: 1.25rem; font-weight: 600; }
+        .card-description { font-size: 0.9rem; color: #6b7280; }
+
+        .player-wrapper {
+            position: relative;
+            background: #000;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        video { width: 100%; height: 100%; display: block; border-radius: 0.5rem; outline: none; }
+
+        /* Spinner */
+        .spinner {
+            position: absolute;
+            width: 48px; height: 48px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            z-index: 20;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Error overlay */
+        .error-overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.65);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: center;
+            padding: 1rem;
+            z-index: 30;
+        }
+
+        /* Controls */
+        .controls {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0));
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            opacity: 1; /* always visible */
+            z-index: 10;
+        }
+        .btn {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem;
+        }
+        .btn svg { width: 22px; height: 22px; stroke-width: 2; }
+
+        .progress {
+            flex: 1;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            margin: 0 0.5rem;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-bar { height: 100%; width: 0%; background: #3b82f6; }
+
+        .card-footer {
+            font-size: 0.85rem;
+            color: #6b7280;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
-<video id="video" controls autoplay playsinline width="480" height="320"></video>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script>
-    const streamKey = new URLSearchParams(location.search).get('key') || 'test';
-    const src = `http://${location.hostname}:8000/live/${streamKey}/index.m3u8`;
-    const video = document.getElementById('video');
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">🎥 Live Stream</div>
+        <div class="card-description">Watch your stream in real-time with HLS.</div>
+    </div>
 
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Safari
-        video.src = src;
-    } else if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(src);
-        hls.attachMedia(video);
-    } else {
-        alert('HLS not supported in this browser.');
+    <div class="player-wrapper">
+        <div class="spinner" id="spinner"></div>
+        <div class="error-overlay" id="errorOverlay"></div>
+        <video id="video" playsinline></video>
+        <div class="controls">
+            <button class="btn" id="playPause"><i data-lucide="play"></i></button>
+            <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+            <button class="btn" id="muteUnmute"><i data-lucide="volume-2"></i></button>
+            <button class="btn" id="fullscreen"><i data-lucide="maximize"></i></button>
+        </div>
+    </div>
+
+    <div class="card-footer" id="footerMsg">
+        Waiting for a valid stream key to begin playback.
+    </div>
+</div>
+
+<!-- HLS.js -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<!-- Lucide JS -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    lucide.createIcons();
+
+    const video = document.getElementById('video');
+    const spinner = document.getElementById('spinner');
+    const errorOverlay = document.getElementById('errorOverlay');
+    const playPauseBtn = document.getElementById('playPause');
+    const muteBtn = document.getElementById('muteUnmute');
+    const fullscreenBtn = document.getElementById('fullscreen');
+    const progressBar = document.getElementById('progressBar');
+    const footerMsg = document.getElementById('footerMsg');
+
+    function showError(message) {
+        spinner.style.display = 'none';   // stop loader immediately
+        errorOverlay.textContent = message;
+        errorOverlay.style.display = 'flex';
+        footerMsg.textContent = message;
     }
+
+    const streamKey = new URLSearchParams(location.search).get('key');
+    if (!streamKey) {
+        showError("No stream key provided. Please append ?key=your-key to the URL.");
+    } else {
+        const src = `http://${location.hostname}:8000/live/${streamKey}/index.m3u8`;
+        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = src;
+        } else if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(src);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.ERROR, (_, data) => {
+                if (data.fatal) {
+                    showError("Stream unavailable. Please verify your stream key or try again later.");
+                }
+            });
+        } else {
+            showError("This browser does not support HLS playback.");
+        }
+    }
+
+    // Spinner events
+    video.addEventListener('waiting', () => {
+        if (errorOverlay.style.display !== 'flex') {
+            spinner.style.display = 'block';
+        }
+    });
+    video.addEventListener('playing', () => spinner.style.display = 'none');
+
+    // Play/pause
+    playPauseBtn.addEventListener('click', () => {
+        if (video.paused) {
+            video.play();
+            playPauseBtn.innerHTML = lucide.createIcons({icons:{pause: lucide.icons.Pause}}).pause.outerHTML;
+        } else {
+            video.pause();
+            playPauseBtn.innerHTML = lucide.createIcons({icons:{play: lucide.icons.Play}}).play.outerHTML;
+        }
+    });
+
+    // Mute/unmute
+    muteBtn.addEventListener('click', () => {
+        video.muted = !video.muted;
+        muteBtn.innerHTML = video.muted
+            ? lucide.createIcons({icons:{'volume-x': lucide.icons['VolumeX']}})['volume-x'].outerHTML
+            : lucide.createIcons({icons:{'volume-2': lucide.icons['Volume2']}})['volume-2'].outerHTML;
+    });
+
+    // Fullscreen
+    fullscreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+            video.parentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    });
+
+    // Progress
+    video.addEventListener('timeupdate', () => {
+        if (video.duration) {
+            const progress = (video.currentTime / video.duration) * 100;
+            progressBar.style.width = progress + '%';
+        }
+    });
 </script>
 </body>
 </html>

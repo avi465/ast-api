@@ -6,6 +6,7 @@ const fileSchema = new mongoose.Schema({
     mimetype: { type: String, required: true },
     size: { type: Number, required: true },
     path: { type: String, required: true },
+    storageType: { type: String, enum: ['local', 's3'], default: 'local' },
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
     uploadDate: { type: Date, default: Date.now },
     metadata: { type: Object },

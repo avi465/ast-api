@@ -44,6 +44,10 @@ const { imageUploadPath, fileUploadPath} = require('./config');
 // hls/dash players
 app.use('/player', express.static(path.join(__dirname, 'public')));
 
+app.get('/player/hls', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'hls.html'));
+});
+
 app.use('/upload/images', express.static(imageUploadPath));
 app.use('/upload/files', authenticateUserOrAdmin, express.static(fileUploadPath));
 

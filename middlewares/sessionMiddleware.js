@@ -27,6 +27,7 @@ const sessionMiddleware = session({
     saveUninitialized: false,
     store: store,
     cookie: {
+        sameSite: 'none', // Helps protect against CSRF attacks
         // secure: process.env.NODE_ENV === 'production',  // Set to true if using HTTPS
         maxAge: 24 * 60 * 60 * 1000 * 30, // Session expiration time in milliseconds
     },

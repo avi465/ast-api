@@ -3,43 +3,25 @@ const File = require('../models/File');
 const {errorResponse, successResponse} = require("../utils/response");
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const isProduction = process.env.NODE_ENV === 'production'
 
 exports.uploadImages = async (req, res) => {
     try {
         const files = req.files || [];
 
         if (!files.length) {
-            return res.status(400).json({ error: 'No files uploaded' });
+            errorResponse(res, 'No images uploaded', 400, ['No files found in the request']);
         }
 
-        console.log(files);
+        const images = await Image.insertMany(req.processedImages);
 
-        const images = await Promise.all(
-            files.map(async (file) => {
-                const image = new Image({
-                    url: file.path, // or cloudinary URL
-                    altText: file.originalname,
-                    metadata: {
-                        fieldname: file.fieldname,
-                        originalname: file.originalname,
-                        encoding: file.encoding,
-                        mimetype: file.mimetype,
-                        destination: file.destination,
-                        filename: file.filename,
-                        path: file.path,
-                        size: file.size,
-                    },
-                });
-                return await image.save();
-            })
-        );
-
-        res.status(201).json({
-            message: 'Images uploaded successfully',
-            images: images.map(({ _id, url, altText }) => ({ _id, url, altText })),
-        });
+        successResponse(res, 'Images uploaded successfully', 201, images.map(({ _id, variants, altText }) => ({
+            _id,
+            url: variants[0].url,
+            altText,
+            variants,
+        })),)
     } catch (err) {
-        console.error(err);
         errorResponse(res, 'Image upload failed', 500, [err.message]);
     }
 };
@@ -60,7 +42,8 @@ exports.uploadFile = async (req, res) => {
             originalname: req.file.originalname,
             mimetype: req.file.mimetype,
             size: req.file.size,
-            path: req.file.path,
+            path: isProduction ? s3Url : req.file.path,
+            storageType: isProduction ? 's3' : 'local',
             uploadedBy: req.admin ? req.admin._id : null,
             metadata: {
                 fieldname: req.file.fieldname,

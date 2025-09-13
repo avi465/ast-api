@@ -31,6 +31,7 @@ const sessionMiddleware = session({
         sameSite: isProduction ? 'lax' : undefined,
         secure: isProduction,
         httpOnly: true,
+        path: "/",
         domain: isProduction ? '.advancedstudytutorial.in' : undefined,
         maxAge: 24 * 60 * 60 * 1000 * 30,
     }

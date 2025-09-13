@@ -10,6 +10,10 @@ const app = express();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Trust proxy settings for secure cookies in production behind a proxy (e.g., Heroku, Nginx)
+// 1 means trust the first proxy
+app.set("trust proxy", 1);
+
 // CORS middleware
 app.use(cors({
     origin: isProduction ? [process.env.CORS_ORIGIN] : [process.env.CORS_ORIGIN_DEV],

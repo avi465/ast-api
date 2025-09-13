@@ -15,6 +15,7 @@ exports.createLesson = async (req, res) => {
             type: lessonData.type,
             status: lessonData.status || 'scheduled',
             stream: lessonData.stream,
+            course: lessonData.course,
             module: lessonData.module,
             slides: lessonData.slides || [],
             images: lessonData.images || [],

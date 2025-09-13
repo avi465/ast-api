@@ -2,6 +2,8 @@ require('dotenv').config();
 const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 // Create a new MongoDBStore instance using the existing connection
 const store = new MongoDBStore(
     {
@@ -20,17 +22,18 @@ store.on('error', (error) => {
 });
 
 // Configure and use express-session middleware with the session store
-// todo: add secure cookie in production
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: store,
     cookie: {
-        sameSite: 'none', // Helps protect against CSRF attacks
-        // secure: process.env.NODE_ENV === 'production',  // Set to true if using HTTPS
-        maxAge: 24 * 60 * 60 * 1000 * 30, // Session expiration time in milliseconds
-    },
+        sameSite: isProduction ? 'lax' : undefined,
+        secure: isProduction,
+        httpOnly: true,
+        domain: isProduction ? '.advancedstudytutorial.in' : undefined,
+        maxAge: 24 * 60 * 60 * 1000 * 30,
+    }
 });
 
 module.exports = { store, sessionMiddleware };

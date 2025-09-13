@@ -10,6 +10,7 @@ const lessonSchema = new mongoose.Schema({
     type: { type: String, enum: ['live', 'recorded'], required: true },
     status: { type: String,  enum: ['scheduled', 'ongoing', 'completed', 'cancelled', 'pending', 'failed', 'archived'], default: 'scheduled' },
     stream: { type: mongoose.Schema.Types.ObjectId, ref: 'Stream' },
+    course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
     module: { type: mongoose.Schema.Types.ObjectId, ref: 'Module', required: true },
     images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Image' }],
     instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'Instructor' },

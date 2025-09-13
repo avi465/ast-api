@@ -2,6 +2,7 @@ const Course = require('../models/Course');
 const Payment = require('../models/Payment');
 const Category = require('../models/Category');
 const Image = require('../models/Image');
+const Module = require('../models/Module');
 const { successResponse, errorResponse } = require('../utils/response');
 
 // Get all courses
@@ -144,7 +145,7 @@ exports.addCourse = async (req, res) => {
         // Validate if images exist
         const validateIfImagesExist = await Image.find({ _id: { $in: images } });
         if (validateIfImagesExist.length !== images.length) {
-            return errorResponse(res, 'Some images not found', 400, []);
+            return errorResponse(res, 'Image/s not found', 400, []);
         }
 
         const course = new Course({
@@ -157,6 +158,20 @@ exports.addCourse = async (req, res) => {
             images, // Should be array of ObjectId strings
             ratings
         });
+
+        // create default module for course
+        const defaultModule = new Module({
+            title: 'Introduction',
+            description: 'This is the default system generated module.',
+            course: course._id,
+            lessons: [],
+            isDefault: true,
+            status: 'published',
+            topicsCovered: []
+        });
+
+        await defaultModule.save();
+        course.modules.push(defaultModule._id);
 
         await course.save();
         successResponse(res, 'Course created successfully', 201, course);

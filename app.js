@@ -8,10 +8,11 @@ const { authenticateAdmin, authenticateUser, authenticateUserOrAdmin } = require
 const {errorResponse, successResponse} = require("./utils/response");
 const app = express();
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 // CORS middleware
 app.use(cors({
-    // origin: process.env.CORS_ORIGIN, // Replace with frontend's URL
-    origin: "http://localhost:3001",
+    origin: isProduction ? [process.env.CORS_ORIGIN] : [process.env.CORS_ORIGIN_DEV],
     credentials: true, // Enable cookies and session to be sent in cross-origin requests
 }));
 

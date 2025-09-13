@@ -10,6 +10,7 @@ exports.createModule = async (req, res) => {
             description: moduleData.description,
             course: moduleData.course,
             lessons: moduleData.lessons || [],
+            isDefault: moduleData.isDefault || false,
             status: moduleData.status || 'draft',
             topicsCovered: moduleData.topicsCovered || []
         });

@@ -164,7 +164,7 @@
     if (!streamKey) {
         showError("No stream key provided. Please append ?key=your-key to the URL.");
     } else {
-        const src = `https://${location.hostname}:8000/live/${streamKey}/index.m3u8`;
+        const src = `https://stream.advancedstudytutorial.in/live/${streamKey}/index.m3u8`;
         console.log("Loading stream from:", src);
         if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = src;

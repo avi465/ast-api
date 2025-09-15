@@ -16,7 +16,7 @@ app.set("trust proxy", 1);
 
 // CORS middleware
 app.use(cors({
-    origin: isProduction ? [process.env.CORS_ORIGIN] : [process.env.CORS_ORIGIN_DEV],
+    origin: isProduction ? [process.env.CORS_ORIGIN] : [process.env.CORS_ORIGIN, process.env.CORS_ORIGIN_DEV],
     credentials: true, // Enable cookies and session to be sent in cross-origin requests
 }));
 

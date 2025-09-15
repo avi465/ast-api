@@ -3,6 +3,7 @@ const { store } = require('../middlewares/sessionMiddleware');
 const User = require('../models/User');
 const Admin = require('../models/Admin');
 const Order = require('../models/Order');
+const { errorResponse, successResponse } = require('../utils/response');
 // ...
 
 const adminLogin = async (req, res) => {
@@ -14,13 +15,13 @@ const adminLogin = async (req, res) => {
 
         // Check if the user exists
         if (!adminUser) {
-            return res.status(401).json({ error: 'Invalid email or password' });
+            return errorResponse(res, 'Invalid email or password', 404, []);
         }
 
         // Validate the password
         const isValidPassword = bcrypt.compareSync(password, adminUser.password);
         if (!isValidPassword) {
-            return res.status(401).json({ error: 'Invalid email or password' });
+            return errorResponse(res, 'Invalid email or password', 404, []);
         }
 
         // Log in the user
@@ -34,10 +35,16 @@ const adminLogin = async (req, res) => {
         }
 
         // Send a success response
-        res.status(200).json({ message: 'Login successful' });
+        successResponse(res, 'Login successful', 200, {
+            admin: {
+                _id: adminUser._id,
+                name: adminUser.name,
+                email: adminUser.email,
+            }
+        });
+
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: 'Internal server error' });
+        errorResponse(res, 'Internal Server Error', 500, [error.message]);
     }
 }
 
@@ -49,19 +56,17 @@ const adminLogout = (req, res) => {
         // Remove the session from the session store
         store.destroy(req.sessionID, (error) => {
             if (error) {
-                console.log(error);
-                return res.status(500).json({ error: 'Error while destroying session' });
+                return errorResponse(res, 'Failed to logout', 500, [error.message]);
             }
 
             // Clear the session cookie
             res.clearCookie('sessionId');
 
             // Respond with a success message or redirect to the desired page
-            res.status(200).json({ message: 'Logout successful' });
+            successResponse(res, 'Logout successful', 200, {});
         });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: 'Internal server error' });
+        errorResponse(res, 'Internal Server Error', 500, [error.message]);
     }
 }
 

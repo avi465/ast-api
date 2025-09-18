@@ -42,6 +42,7 @@ const lessonRoutes = require('./routes/lessonRoutes');
 const moduleRoutes = require('./routes/moduleRoutes');
 const slideRoutes = require('./routes/slideRoutes');
 const profileRoutes = require('./routes/profileRoute');
+const quizRoutes = require('./routes/quizRoutes');
 
 // Storage bucket
 const { imageUploadPath, fileUploadPath} = require('./config');
@@ -69,6 +70,7 @@ app.use('/api/lesson', lessonRoutes);
 app.use('/api/module', moduleRoutes);
 app.use('/api/slide', slideRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/quiz', quizRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

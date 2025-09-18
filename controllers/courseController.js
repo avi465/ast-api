@@ -161,8 +161,8 @@ exports.addCourse = async (req, res) => {
 
         // create default module for course
         const defaultModule = new Module({
-            title: 'Introduction',
-            description: 'This is the default system generated module.',
+            title: 'Default Module',
+            description: 'System generated default module',
             course: course._id,
             lessons: [],
             isDefault: true,

@@ -12,7 +12,6 @@ exports.getAllCourses = async (req, res) => {
             .sort({ createdAt: -1 })
             .populate({
                 path: "images",
-                select: ["_id", "url", "altText"]
             })
             .populate({
                 path: "category",

@@ -1,8 +1,9 @@
 const Stream = require('../models/Stream');
+const Lesson = require("../models/Lesson");
 const Payment = require('../models/Payment');
 const Course = require('../models/Course');
 const crypto = require('crypto');
-const {errorResponse, successResponse} = require("../utils/response");
+const { errorResponse, successResponse } = require("../utils/response");
 
 exports.createStream = async (req, res) => {
     const { lesson } = req.body;
@@ -13,7 +14,22 @@ exports.createStream = async (req, res) => {
             lesson: lesson,
             createdBy: req.admin ? req.admin._id : null
         });
+
+        // update lesson to link to this stream
+        if (!stream.lesson) {
+            return errorResponse(res, "Lesson ID is required to create a stream", 400);
+        }
+
+        // after creating the stream, update the lesson to reference this stream
+        const lessonDoc = await Lesson.findByIdAndUpdate(stream.lesson, { stream: stream._id }, { new: true });
+
+        if (!lessonDoc) {
+            return errorResponse(res, "Lesson not found", 404);
+        }
+
+        await lessonDoc.save();
         await stream.save();
+
         successResponse(res, "Stream created successfully", 201, stream);
     } catch (err) {
         errorResponse(res, "Failed to create stream", 400, [err.message]);
